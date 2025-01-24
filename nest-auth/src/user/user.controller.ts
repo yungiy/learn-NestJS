@@ -26,13 +26,13 @@ export class UserController {
     return user;
   }
 
-  @Put()
+  @Put('/update/:email')
   updateUser(@Param('email') email: string, @Body() user: User) {
     console.log(user);
     return this.userService.updateUser(email, user);
   }
 
-  @Delete()
+  @Delete('/delete/:email')
   deleteUser(@Param('email') email: string) {
     return this.userService.deleteUser(email);
   }
