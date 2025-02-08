@@ -1,22 +1,12 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  NotFoundException,
-  Param,
-  Patch,
-  Post,
-} from '@nestjs/common';
-import { AppService } from './app.service';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
-type Movie = {
+export type Movie = {
   id: number;
   title: string;
 };
 
-@Controller('movie')
-export class AppController {
+@Injectable()
+export class MovieService {
   private movies: Movie[] = [
     {
       id: 1,
@@ -27,28 +17,26 @@ export class AppController {
       title: '반지의 제왕',
     },
   ];
+
   private idCounter = 3;
 
-  constructor(private readonly appService: AppService) {}
-
-  @Get()
-  getMovies() {
-    return this.movies;
+  getManyMovies(title?: string) {
+    if (!title) {
+      return this.movies;
+    }
+    return this.movies.filter((m) => m.title.startsWith(title)); // 해당 글자로 시작하는 것은 모두 반환
   }
 
-  @Get(':id')
-  getMovie(@Param('id') id: string) {
-    const movie = this.movies.find((m) => m.id === +id);
-    if (!movie) {
-      // throw new Error('존재하지 않는 영화 입니다.');
-      throw new NotFoundException('존재하지 않는 영화 입니다.');
-    }
+  getMovieById(id: number) {
+    const movie = this.movies.find((m) => m.id === id);
 
+    if (!movie) {
+      throw new NotFoundException('존재하지 않는 Id의 영화 입니다.');
+    }
     return movie;
   }
 
-  @Post()
-  postMovie(@Body('title') title: string) {
+  createMovie(title: string) {
     const movie: Movie = {
       id: this.idCounter++,
       title: title,
@@ -58,8 +46,7 @@ export class AppController {
     return movie;
   }
 
-  @Patch(':id')
-  patchMovie(@Param('id') id: string, @Body('title') title: string) {
+  updateMovie(id: number, title: string) {
     const movie = this.movies.find((m) => m.id === +id);
     if (!movie) {
       throw new NotFoundException('존재하지 않는 ID의 영화입니다.');
@@ -70,8 +57,7 @@ export class AppController {
     return movie;
   }
 
-  @Delete(':id')
-  deleteMovie(@Param('id') id: string) {
+  deleteMovie(id: number) {
     const movieIndex = this.movies.findIndex((m) => m.id === +id);
     if (movieIndex === -1) {
       throw new NotFoundException('존재하지 않는 ID의 영화입니다.');
