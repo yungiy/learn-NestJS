@@ -1,6 +1,14 @@
-import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { BaseEntity } from './base.entity';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { MovieDetail } from './movie-detail.entity';
+import { BaseEntity } from '../../common/entity/base.entity';
+import { Director } from '../../director/entity/director.entity';
 
 @Entity()
 export class Movie extends BaseEntity {
@@ -13,8 +21,10 @@ export class Movie extends BaseEntity {
   @Column()
   genre: string;
 
-  @OneToOne(()=> MovieDetail)
+  @OneToOne(() => MovieDetail, (movieDetail) => movieDetail.id)
   @JoinColumn()
   detail: MovieDetail;
 
+  @ManyToOne(() => Director, (director) => director.id)
+  director: Director;
 }

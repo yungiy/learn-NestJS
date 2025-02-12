@@ -9,6 +9,7 @@ export class MovieDetail {
   @Column()
   detail: string;
 
-  @OneToOne(()=> Movie)
+  @OneToOne(() => Movie, (movie) => movie.id,
+    {cascade: true, nullable: true})
   movie: Movie;
 }

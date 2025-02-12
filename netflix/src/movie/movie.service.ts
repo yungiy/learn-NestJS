@@ -6,6 +6,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { MovieDetail } from './entity/movie-detail.entity';
 
+/*
+  ManyToOne 감독은 여러개의 영화를 만들 수 있다.
+  OneToOne 영화는 하나의 상세 내용을 가진다.
+  ManyToMany 영화는 여러개의 장르를 갖을 수 있고 장르는 여러개의 영화에 속할 수 있다.
+*/
+
 @Injectable()
 export class MovieService {
   constructor(
@@ -15,7 +21,7 @@ export class MovieService {
     private readonly movieDetailRepository: Repository<MovieDetail>,
   ) {}
 
-  async getManyMovies(title?: string) {
+  async findAll(title?: string) {
     // 데이터가 매우 많을 때 사용하는 필터 기능
     if (!title) {
       return [
@@ -31,7 +37,7 @@ export class MovieService {
     });
   }
 
-  async getMovieById(id: number) {
+  async findOne(id: number) {
     // 아이디를 하나만 찾을 때 사용
     const movie = await this.movieRepository.findOne({
       where: { id },
@@ -44,19 +50,17 @@ export class MovieService {
     return movie;
   }
 
-  async createMovie(createMovieDto: CreateMovieDto) {
-    const movieDetail = await this.movieDetailRepository.save({
-      detail: createMovieDto.detail,
-    });
-
+  async create(createMovieDto: CreateMovieDto) {
     return await this.movieRepository.save({
       title: createMovieDto.title,
       genre: createMovieDto.genre,
-      detail: movieDetail,
+      detail: {
+        detail: createMovieDto.detail,
+      }
     });
   }
 
-  async updateMovie(id: number, updateMovieDto: UpdateMovieDto) {
+  async update(id: number, updateMovieDto: UpdateMovieDto) {
     const movie = await this.movieRepository.findOne({
       where: { id },
       relations: ['detail'],
@@ -85,7 +89,7 @@ export class MovieService {
     });
   }
 
-  async deleteMovie(id: number) {
+  async remove(id: number) {
     const movie = await this.movieRepository.findOne({
       where: { id },
       relations: ['detail'],
