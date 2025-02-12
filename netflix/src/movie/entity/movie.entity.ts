@@ -1,22 +1,6 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-  VersionColumn,
-} from 'typeorm';
-
-export class BaseEntity {
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @VersionColumn()
-  version: number;
-}
+import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { BaseEntity } from './base.entity';
+import { MovieDetail } from './movie-detail.entity';
 
 @Entity()
 export class Movie extends BaseEntity {
@@ -29,7 +13,8 @@ export class Movie extends BaseEntity {
   @Column()
   genre: string;
 
-  @Column()
-  runtime: number;
+  @OneToOne(()=> MovieDetail)
+  @JoinColumn()
+  detail: MovieDetail;
+
 }
-//
