@@ -35,7 +35,6 @@ export class DirectorService {
       throw new NotFoundException('존재하지 않는 Id의 영화 입니다.');
     }
     await this.directorRepository.update({ id }, { ...updateDirectorDto });
-
     return await this.directorRepository.findOne({
       where: { id },
     });

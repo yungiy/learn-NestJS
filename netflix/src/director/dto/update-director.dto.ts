@@ -7,8 +7,9 @@ export class UpdateDirectorDto {
 
   @IsNotEmpty()
   @IsDateString()
+  @IsOptional()
   dob?: Date;
 
-  @IsNotEmpty()
+  @IsOptional()
   nationality?: string;
 }
