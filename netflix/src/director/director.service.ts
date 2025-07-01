@@ -25,10 +25,7 @@ export class DirectorService {
   }
 
   async update(id: number, updateDirectorDto: UpdateDirectorDto) {
-    const director = await this.directorRepository.findOne({
-      where: { id },
-      relations: ['detail'],
-    });
+    const director = await this.directorRepository.findOne({ where: { id } });
 
     if (!director) {
       throw new NotFoundException('없는 영화 id 값임!');
@@ -43,7 +40,15 @@ export class DirectorService {
     return newDirector;
   }
 
-  remove(id: number) {
-    return this.directorRepository.delete(id)
+  async remove(id: number) {
+    const director = await this.directorRepository.findOne({ where: { id } });
+
+    if (!director) {
+      throw new NotFoundException('없는 영화 id 값임!');
+    }
+
+    await this.directorRepository.delete(id);
+
+    return id;
   }
 }
