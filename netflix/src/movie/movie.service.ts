@@ -2,46 +2,42 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
 import { Movie } from './entity/movie.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Like, Repository } from 'typeorm';
+import { MovieDetail } from './entity/movie-detail';
 
 @Injectable()
 export class MovieService {
-  private movies: Movie[] = [];
-  
-  private idCounter = 5;
+  constructor(
+    @InjectRepository(Movie)
+    private readonly movieRepository: Repository<Movie>,
 
-  constructor() {
-    const movie1 = new Movie();
-    movie1.id = 1;
-    movie1.title = '해리포터';
-    movie1.genre = 'fantasy';
+    @InjectRepository(MovieDetail)
+    private readonly movieDetailRepository: Repository<MovieDetail>,
+  ) {}
 
-    const movie2 = new Movie();
-    movie2.id = 2;
-    movie2.title = '반지의 제왕';
-    movie2.genre = 'fantasy';
+  async findAll(title?: string) {
+    // 나중에 title 필터 추가
 
-    const movie3 = new Movie();
-    movie3.id = 3;
-    movie3.title = '어벤져스';
-    movie3.genre = 'SF';
-
-    const movie4 = new Movie();
-    movie4.id = 4;
-    movie4.title = '원피스';
-    movie4.genre = 'animation';
-
-    this.movies = [movie1, movie2, movie3, movie4];
-  }
-
-  getManyMovies(title?: string) {
     if (!title) {
-      return this.movies;
+      return [
+        await this.movieRepository.find(),
+        await this.movieRepository.count(),
+      ];
     }
-    return this.movies.filter((m) => m.title.startsWith(title));
+
+    return this.movieRepository.find({
+      where: {
+        title: Like(`%${title}%`),
+      },
+    });
   }
 
-  getMovieById(id: number) {
-    const movie = this.movies.find((m) => m.id === +id);
+  async findOne(id: number) {
+    const movie = await this.movieRepository.findOne({
+      where: { id },
+      relations: ['detail'],
+    });
 
     if (!movie) {
       throw new NotFoundException('없는 영화 id 값임!');
@@ -50,57 +46,58 @@ export class MovieService {
     return movie;
   }
 
-  createMovie(cretateMovieDto: CreateMovieDto) {
-    const movie: Movie = {
-      id: this.idCounter++,
-      ...cretateMovieDto,
-    };
-    this.movies.push(movie);
+  async create(createMovieDto: CreateMovieDto) {
 
+    const movie = await this.movieRepository.save({
+      title: createMovieDto.title,
+      genre: createMovieDto.genre,
+      detail: {
+        detail: createMovieDto.detail,
+      }
+    });
     return movie;
   }
 
-  updateMovie(id: number, updateMovieDto: UpdateMovieDto) {
-    const movie = this.movies.find((m) => m.id == +id);
+  async update(id: number, updateMovieDto: UpdateMovieDto) {
+    const movie = await this.movieRepository.findOne({
+      where: { id },
+      relations: ['detail'],
+    });
 
     if (!movie) {
       throw new NotFoundException('없는 영화 id 값임!');
     }
 
-    Object.assign(movie, updateMovieDto);
+    const { detail, ...movieRest } = updateMovieDto;
 
-    return movie;
+    await this.movieRepository.update({ id }, movieRest);
+
+    if (detail) {
+      await this.movieDetailRepository.update(
+        { id: movie.detail.id },
+        { detail },
+      );
+    }
+
+    const newMovie = await this.movieRepository.findOne({
+      where: {
+        id,
+      },
+      relations: ['detail'],
+    });
+
+    return newMovie;
   }
 
-  deleteMovie(id: number) {
-    const movieIndex = this.movies.findIndex((m) => m.id == +id);
+  async remove(id: number) {
+    const movie = await this.movieRepository.findOne({ where: { id }, relations: ['detail'] });
 
-    if (!movieIndex) {
+    if (!movie) {
       throw new NotFoundException('없는 영화 id 값임!');
     }
 
-    this.movies.splice(movieIndex, 1);
+    await this.movieRepository.delete(id);
+    await this.movieDetailRepository.delete(movie.detail.id)
     return id;
   }
 }
-
-//  {
-//       id: 1,
-//       title: '해리포터',
-//       genre: 'fantasy',
-//     },
-//     {
-//       id: 2,
-//       title: '반지의 제왕',
-//       genre: 'fantasy',
-//     },
-//     {
-//       id: 3,
-//       title: '어벤져스',
-//       genre: 'SF',
-//     },
-//     {
-//       id: 4,
-//       title: '원피스',
-//       genre: 'animation',
-//     },
